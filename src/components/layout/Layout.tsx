@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { House, LayoutDashboard, Building2, Users, FileText, Trello, Settings, Info, Menu, Bell, Search, Sun, Moon } from 'lucide-react';
@@ -15,18 +15,24 @@ const navItems = [
   { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
 
-const Sidebar = () => {
+interface SidebarProps {
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
+}
+
+const Sidebar = ({ mobileOpen, onCloseMobile }: SidebarProps) => {
   const { isSidebarOpen, config } = useAppStore();
   const location = useLocation();
 
   return (
-    <motion.aside 
-      initial={false}
-      animate={{ 
-        width: isSidebarOpen ? 260 : 80,
-      }}
-      className="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 z-20 hidden lg:flex"
-    >
+    <>
+      <motion.aside 
+        initial={false}
+        animate={{ 
+          width: isSidebarOpen ? 260 : 80,
+        }}
+        className="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 z-20 hidden lg:flex"
+      >
       <div className="h-16 flex items-center px-4 border-b border-slate-200 dark:border-slate-800 overflow-hidden shrink-0">
         <div 
           className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg"
@@ -112,47 +118,85 @@ const Sidebar = () => {
           </AnimatePresence>
         </div>
       </div>
-    </motion.aside>
-  );
-};
-
-const MobileNav = () => {
-  const location = useLocation();
-
-  return (
-    <nav className="lg:hidden border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
-      <div className="flex items-center gap-2 overflow-x-auto px-4 py-2">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path ||
-            (item.path !== '/' && location.pathname.startsWith(item.path));
-
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
-                isActive
-                  ? 'text-white'
-                  : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60'
-              }`}
-              style={isActive ? { backgroundColor: 'var(--color-primary)' } : undefined}
+      </motion.aside>
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onCloseMobile}
+              className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ type: 'tween', duration: 0.2 }}
+              className="fixed inset-y-0 left-0 w-[280px] max-w-[85vw] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-40 lg:hidden"
             >
-              <item.icon size={16} />
-              {item.label}
-            </NavLink>
-          );
-        })}
-      </div>
-    </nav>
+              <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg"
+                    style={{ backgroundColor: 'var(--color-primary)' }}
+                  >
+                    <Building2 size={20} />
+                  </div>
+                  <span className="font-bold text-lg truncate">{config.companyName}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={onCloseMobile}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+                >
+                  <Menu size={20} />
+                </button>
+              </div>
+              <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
+                {navItems.map((item) => {
+                  const isActive = location.pathname === item.path ||
+                    (item.path !== '/' && location.pathname.startsWith(item.path));
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={onCloseMobile}
+                      className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
+                        isActive
+                          ? 'text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                      style={isActive ? { backgroundColor: 'var(--color-primary)' } : undefined}
+                    >
+                      <item.icon size={20} />
+                      <span className="truncate">{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </nav>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
-const Header = () => {
+const Header = ({ onOpenMobileSidebar }: { onOpenMobileSidebar: () => void }) => {
   const { toggleSidebar, theme, toggleTheme } = useAppStore();
 
   return (
     <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 sticky top-0 z-10">
       <div className="flex items-center gap-4">
+        <button
+          onClick={onOpenMobileSidebar}
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors lg:hidden"
+        >
+          <Menu size={20} />
+        </button>
         <button 
           onClick={toggleSidebar}
           className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors hidden lg:block"
@@ -189,13 +233,16 @@ const Header = () => {
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
     <div className="flex h-dvh min-h-dvh bg-slate-50 dark:bg-slate-950 overflow-hidden">
-      <Sidebar />
+      <Sidebar
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+      />
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <Header />
-        <MobileNav />
+        <Header onOpenMobileSidebar={() => setMobileSidebarOpen(true)} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
           <motion.div
             key={location.pathname}
