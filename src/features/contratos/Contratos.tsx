@@ -4,8 +4,11 @@ import { Plus, FileText, AlertTriangle, CheckCircle, Clock, Edit } from 'lucide-
 import contractsData from '../../data/contracts.json';
 import clientsData from '../../data/clients.json';
 import propertiesData from '../../data/properties.json';
-import { ContractForm } from './ContractForm';
+import { ContractForm, type FormattedContract } from './ContractForm';
 import { AdvancedFilter } from '../../components/ui/AdvancedFilter';
+
+type Contract = FormattedContract;
+type ContractFilters = Record<string, string | number | null | undefined>;
 
 const filterOptions = [
   { id: 'status', label: 'Status', type: 'select' as const, options: [
@@ -21,11 +24,13 @@ const filterOptions = [
 ];
 
 const Contratos = () => {
-  const [contracts, setContracts] = useState(contractsData);
+  const [contracts, setContracts] = useState<Contract[]>(
+    contractsData.map(contract => ({ ...contract, signedAt: null }))
+  );
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<ContractFilters>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
 
   // Map IDs to names for display
   const getClientName = (id: string) => clientsData.find(c => c.id === id)?.name || 'Cliente não encontrado';
@@ -44,7 +49,7 @@ const Contratos = () => {
     }).slice(0, 50);
   }, [contracts, searchTerm, filters]);
 
-  const handleSaveContract = (newContract: any) => {
+  const handleSaveContract = (newContract: Contract) => {
     if (selectedContract) {
       setContracts(prev => prev.map(c => c.id === newContract.id ? newContract : c));
     } else {
@@ -85,7 +90,7 @@ const Contratos = () => {
         </div>
         <button 
           onClick={() => { setSelectedContract(null); setIsFormOpen(true); }}
-          className="bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-opacity shadow-sm"
+          className="w-full sm:w-auto bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-opacity shadow-sm"
         >
           <Plus size={18} />
           Novo Contrato
@@ -98,16 +103,16 @@ const Contratos = () => {
         filterOptions={filterOptions} 
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filteredContracts.map((contract, index) => (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
             key={contract.id}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden"
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden"
           >
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex flex-wrap gap-3 justify-between items-start mb-4">
               <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
                 <FileText size={20} />
               </div>
@@ -124,7 +129,7 @@ const Contratos = () => {
                 <p className="text-sm text-slate-700 dark:text-slate-300 truncate">{getPropertyTitle(contract.propertyId)}</p>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <div>
                   <p className="text-xs text-slate-500">Valor</p>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">{formatCurrency(contract.value)}</p>
@@ -135,7 +140,7 @@ const Contratos = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
                 <div>
                   <p className="text-xs text-slate-500">Início</p>
                   <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{new Date(contract.startDate).toLocaleDateString('pt-BR')}</p>
@@ -147,7 +152,7 @@ const Contratos = () => {
               </div>
             </div>
 
-            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-4 right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
               <button 
                 onClick={() => { setSelectedContract(contract); setIsFormOpen(true); }}
                 className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:text-[var(--color-primary)] transition-colors"
@@ -170,7 +175,7 @@ const Contratos = () => {
       <AnimatePresence>
         {isFormOpen && (
           <ContractForm 
-            contract={selectedContract}
+            contract={selectedContract ?? undefined}
             onClose={() => setIsFormOpen(false)} 
             onSubmit={handleSaveContract} 
           />

@@ -58,7 +58,7 @@ const filterOptions = [
 const Properties = () => {
   const [propertiesData, setPropertiesData] = useState<Property[]>(initialPropertiesData as Property[]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<Record<string, string | number>>({});
+  const [filters, setFilters] = useState<Record<string, string | number | null | undefined>>({});
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -156,7 +156,7 @@ const Properties = () => {
         </div>
         <button 
           onClick={handleOpenNewProperty}
-          className="bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-opacity shadow-sm"
+          className="w-full sm:w-auto bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-opacity shadow-sm"
         >
           <Plus size={18} />
           Novo Imóvel
@@ -173,7 +173,7 @@ const Properties = () => {
       {/* Properties Table/List */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[760px] text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Imóvel</th>
@@ -254,9 +254,9 @@ const Properties = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl z-50 overflow-hidden border border-slate-200 dark:border-slate-800"
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl z-50 border border-slate-200 dark:border-slate-800"
             >
-              <div className="relative h-64 w-full">
+              <div className="relative h-48 sm:h-64 w-full">
                 <img src={selectedProperty.image} alt="Imóvel" className="w-full h-full object-cover" />
                 <button 
                   onClick={() => setSelectedProperty(null)}
@@ -275,15 +275,15 @@ const Properties = () => {
                 </div>
               </div>
               
-              <div className="p-6 md:p-8">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
+              <div className="p-5 sm:p-6 md:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                  <div className="min-w-0">
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedProperty.title}</h2>
-                    <p className="text-slate-500 flex items-center gap-1 mt-2">
+                    <p className="text-slate-500 flex items-center gap-1 mt-2 break-words">
                       <MapPin size={16} /> {selectedProperty.address}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="sm:text-right">
                     <p className="text-xs text-slate-500 uppercase font-semibold tracking-wider">Valor de Venda</p>
                     <p className="text-2xl font-bold text-[var(--color-primary)]">
                       {formatCurrency(selectedProperty.price)}
@@ -310,7 +310,7 @@ const Properties = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={handleEditProperty}
                     className="flex-1 py-3 bg-[var(--color-primary)] hover:opacity-90 text-white rounded-xl font-medium transition-opacity"

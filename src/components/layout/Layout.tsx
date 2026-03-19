@@ -4,18 +4,18 @@ import { useAppStore } from '../../store/useAppStore';
 import { LayoutDashboard, Home, Users, FileText, Trello, Settings, Menu, Bell, Search, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const navItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: Home, label: 'Imóveis', path: '/imoveis' },
+  { icon: Users, label: 'Clientes', path: '/clientes' },
+  { icon: FileText, label: 'Contratos', path: '/contratos' },
+  { icon: Trello, label: 'Pipeline', path: '/pipeline' },
+  { icon: Settings, label: 'Configurações', path: '/settings' },
+];
+
 const Sidebar = () => {
   const { isSidebarOpen, config } = useAppStore();
   const location = useLocation();
-
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-    { icon: Home, label: 'Imóveis', path: '/imoveis' },
-    { icon: Users, label: 'Clientes', path: '/clientes' },
-    { icon: FileText, label: 'Contratos', path: '/contratos' },
-    { icon: Trello, label: 'Pipeline', path: '/pipeline' },
-    { icon: Settings, label: 'Configurações', path: '/settings' },
-  ];
 
   return (
     <motion.aside 
@@ -114,11 +114,42 @@ const Sidebar = () => {
   );
 };
 
+const MobileNav = () => {
+  const location = useLocation();
+
+  return (
+    <nav className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
+      <div className="flex items-center gap-2 overflow-x-auto px-4 py-2">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path ||
+            (item.path !== '/' && location.pathname.startsWith(item.path));
+
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                isActive
+                  ? 'text-white'
+                  : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60'
+              }`}
+              style={isActive ? { backgroundColor: 'var(--color-primary)' } : undefined}
+            >
+              <item.icon size={16} />
+              {item.label}
+            </NavLink>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};
+
 const Header = () => {
   const { toggleSidebar, theme, toggleTheme } = useAppStore();
 
   return (
-    <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sticky top-0 z-10">
+    <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 sticky top-0 z-10">
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleSidebar}
@@ -137,7 +168,7 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <button 
           onClick={toggleTheme}
           className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
@@ -158,18 +189,19 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex h-dvh min-h-dvh bg-slate-50 dark:bg-slate-950 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
+        <MobileNav />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="h-full max-w-7xl mx-auto"
+            className="h-full w-full max-w-7xl mx-auto"
           >
             {children}
           </motion.div>

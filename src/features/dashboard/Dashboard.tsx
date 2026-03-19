@@ -119,12 +119,12 @@ const StatCard = ({ title, value, icon: Icon, trend, trendUp, delay }: StatCardP
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.4 }}
-    className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm"
+    className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm"
   >
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-        <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</h3>
+        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</h3>
       </div>
       <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-[var(--color-primary)]">
         <Icon size={24} />
@@ -135,7 +135,7 @@ const StatCard = ({ title, value, icon: Icon, trend, trendUp, delay }: StatCardP
         {trendUp ? <ArrowUpRight size={16} className="mr-1" /> : <ArrowDownRight size={16} className="mr-1" />}
         {trend}
       </span>
-      <span className="text-slate-500 dark:text-slate-400 ml-2">vs mês anterior</span>
+      <span className="text-slate-500 dark:text-slate-400 ml-2 hidden sm:inline">vs mês anterior</span>
     </div>
   </motion.div>
 );
@@ -152,11 +152,11 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Visão geral das métricas operacionais</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <select
             value={periodFilter}
             onChange={(e) => setPeriodFilter(e.target.value as PeriodFilter)}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            className="w-full sm:w-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           >
             {Object.entries(periodLabels).map(([value, label]) => (
               <option key={value} value={value}>
@@ -209,7 +209,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
-          className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm"
+          className="lg:col-span-2 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm"
         >
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Evolução de Negócios</h3>
           <div className="h-72 w-full">
@@ -244,7 +244,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.6 }}
-          className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm"
+          className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm"
         >
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Distribuição de Portfólio</h3>
           <div className="h-72 w-full">
@@ -281,13 +281,13 @@ const Dashboard = () => {
             { msg: 'Análise de crédito cliente #4922 aprovada', time: 'Há 1 hora', type: 'success' },
             { msg: 'Falha ao atualizar anúncio #1092', time: 'Há 2 horas', type: 'error' },
           ].map((item, i) => (
-            <div key={i} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div key={i} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-2 h-2 rounded-full ${
                   item.type === 'success' ? 'bg-emerald-500' : 
                   item.type === 'error' ? 'bg-rose-500' : 'bg-blue-500'
                 }`} />
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{item.msg}</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 break-words">{item.msg}</p>
               </div>
               <span className="text-xs text-slate-500">{item.time}</span>
             </div>

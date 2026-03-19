@@ -9,17 +9,22 @@ interface FilterOption {
   options?: { value: string; label: string }[];
 }
 
+type FilterValue = string | number | null | undefined;
+type FiltersMap = Record<string, FilterValue>;
+
 interface AdvancedFilterProps {
   onSearch: (searchTerm: string) => void;
-  onFilterChange: (filters: Record<string, any>) => void;
+  onFilterChange: (filters: FiltersMap) => void;
   filterOptions: FilterOption[];
 }
 
 export const AdvancedFilter = ({ onSearch, onFilterChange, filterOptions }: AdvancedFilterProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [filters, setFilters] = useState<Record<string, any>>({});
-  const [savedFilters, setSavedFilters] = useState<{name: string, filters: Record<string, any>}[]>([]);
+  const [filters, setFilters] = useState<FiltersMap>({});
+  const [savedFilters, setSavedFilters] = useState<{name: string, filters: FiltersMap}[]>([]);
+  const [isSavingFilter, setIsSavingFilter] = useState(false);
+  const [newFilterName, setNewFilterName] = useState('');
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -27,7 +32,7 @@ export const AdvancedFilter = ({ onSearch, onFilterChange, filterOptions }: Adva
     onSearch(val);
   };
 
-  const handleFilterChange = (id: string, value: any) => {
+  const handleFilterChange = (id: string, value: FilterValue) => {
     const newFilters = { ...filters, [id]: value };
     if (!value || value === 'Todos') {
       delete newFilters[id];
@@ -42,13 +47,14 @@ export const AdvancedFilter = ({ onSearch, onFilterChange, filterOptions }: Adva
   };
 
   const saveCurrentFilter = () => {
-    const name = prompt('Nome para este filtro:');
-    if (name) {
-      setSavedFilters([...savedFilters, { name, filters: { ...filters } }]);
-    }
+    const normalizedName = newFilterName.trim();
+    if (!normalizedName) return;
+    setSavedFilters([...savedFilters, { name: normalizedName, filters: { ...filters } }]);
+    setNewFilterName('');
+    setIsSavingFilter(false);
   };
 
-  const applySavedFilter = (saved: Record<string, any>) => {
+  const applySavedFilter = (saved: FiltersMap) => {
     setFilters(saved);
     onFilterChange(saved);
   };
@@ -132,10 +138,10 @@ export const AdvancedFilter = ({ onSearch, onFilterChange, filterOptions }: Adva
                 ))}
               </div>
               
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex gap-2">
+              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex gap-2 min-w-0">
                   {savedFilters.length > 0 && (
-                    <div className="flex gap-2 items-center mr-4">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
                       <Bookmark size={14} className="text-slate-400" />
                       {savedFilters.map((sf, idx) => (
                         <button 
@@ -149,22 +155,66 @@ export const AdvancedFilter = ({ onSearch, onFilterChange, filterOptions }: Adva
                     </div>
                   )}
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
                   <button 
                     onClick={clearFilters}
-                    className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-1"
+                    className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center justify-center gap-1"
                   >
                     <X size={14} /> Limpar
                   </button>
-                  <button 
-                    onClick={saveCurrentFilter}
+                  <button
+                    onClick={() => setIsSavingFilter(true)}
                     disabled={Object.keys(filters).length === 0}
-                    className="text-sm text-[var(--color-primary)] hover:opacity-80 flex items-center gap-1 font-medium disabled:opacity-50"
+                    className="text-sm text-[var(--color-primary)] hover:opacity-80 flex items-center justify-center gap-1 font-medium disabled:opacity-50"
                   >
                     <Save size={14} /> Salvar Filtro
                   </button>
                 </div>
               </div>
+              <AnimatePresence>
+                {isSavingFilter && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="mt-4 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  >
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                      <input
+                        type="text"
+                        value={newFilterName}
+                        onChange={(e) => setNewFilterName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            saveCurrentFilter();
+                          }
+                        }}
+                        placeholder="Nome do filtro"
+                        className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setIsSavingFilter(false);
+                            setNewFilterName('');
+                          }}
+                          className="flex-1 sm:flex-none px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={saveCurrentFilter}
+                          disabled={!newFilterName.trim()}
+                          className="flex-1 sm:flex-none px-3 py-2 text-sm rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-50 hover:opacity-90 transition-opacity"
+                        >
+                          Salvar
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}

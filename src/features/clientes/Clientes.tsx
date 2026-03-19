@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Mail, Phone, User, Download } from 'lucide-react';
-import { ClientForm } from './ClientForm';
+import { ClientForm, type FormattedClient } from './ClientForm';
 import { AdvancedFilter } from '../../components/ui/AdvancedFilter';
 import clientsData from '../../data/clients.json';
+
+type Client = FormattedClient;
+type ClientFilters = Record<string, string | number | null | undefined>;
 
 const filterOptions = [
   { id: 'type', label: 'Tipo de Cliente', type: 'select' as const, options: [
@@ -21,11 +24,11 @@ const filterOptions = [
 ];
 
 const Clientes = () => {
-  const [clients, setClients] = useState(clientsData);
+  const [clients, setClients] = useState<Client[]>(clientsData as Client[]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<ClientFilters>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const filteredClients = useMemo(() => {
     return clients.filter(client => {
@@ -39,7 +42,7 @@ const Clientes = () => {
     }).slice(0, 50);
   }, [clients, searchTerm, filters]);
 
-  const handleAddClient = (newClient: any) => {
+  const handleAddClient = (newClient: Client) => {
     if (selectedClient) {
       setClients(prev => prev.map(c => c.id === newClient.id ? newClient : c));
     } else {
@@ -80,17 +83,17 @@ const Clientes = () => {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestão de Clientes</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Gerencie compradores, vendedores e locatários</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button 
             onClick={handleExportCSV}
-            className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-sm"
+            className="w-full sm:w-auto bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-sm"
           >
             <Download size={18} />
             Exportar
           </button>
           <button 
             onClick={() => { setSelectedClient(null); setIsFormOpen(true); }}
-            className="bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-opacity shadow-sm"
+            className="w-full sm:w-auto bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-opacity shadow-sm"
           >
             <Plus size={18} />
             Novo Cliente
@@ -106,7 +109,7 @@ const Clientes = () => {
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[760px] text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
@@ -156,7 +159,7 @@ const Clientes = () => {
                       <div>
                         <p className="text-sm text-slate-900 dark:text-white">{client.interest.propertyType}</p>
                         <p className="text-xs text-slate-500">
-                          Até {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(client.interest.maxPrice)}
+                          Até {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(client.interest.maxPrice ?? 0)}
                         </p>
                       </div>
                     ) : (
@@ -189,7 +192,7 @@ const Clientes = () => {
       <AnimatePresence>
         {isFormOpen && (
           <ClientForm 
-            client={selectedClient}
+            client={selectedClient ?? undefined}
             onClose={() => setIsFormOpen(false)} 
             onSubmit={handleAddClient} 
           />

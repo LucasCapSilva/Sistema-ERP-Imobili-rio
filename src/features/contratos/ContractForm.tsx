@@ -19,7 +19,7 @@ const contractSchema = z.object({
 
 type ContractFormData = z.infer<typeof contractSchema>;
 
-interface FormattedContract extends ContractFormData {
+export interface FormattedContract extends ContractFormData {
   id: string;
   startDate: string;
   endDate: string;
@@ -131,7 +131,7 @@ export const ContractForm = ({ contract, initialData, onClose, onSubmit }: Contr
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden my-8 flex flex-col"
+        className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden my-8 flex flex-col max-h-[90vh]"
       >
         <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
@@ -266,11 +266,11 @@ export const ContractForm = ({ contract, initialData, onClose, onSubmit }: Contr
           </form>
         </div>
 
-        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-3 shrink-0">
+        <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 shrink-0">
           <button 
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
           >
             Cancelar
           </button>
@@ -278,7 +278,7 @@ export const ContractForm = ({ contract, initialData, onClose, onSubmit }: Contr
             type="submit"
             form="contract-form"
             disabled={isSubmitting || isSigning}
-            className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-[var(--color-primary)] hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-[var(--color-primary)] hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>

@@ -123,8 +123,8 @@ const Pipeline = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col">
-      <div className="flex items-center justify-between mb-6 shrink-0">
+    <div className="min-h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pipeline de Vendas</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Arraste os cards para atualizar o status da negociação</p>
@@ -134,7 +134,7 @@ const Pipeline = () => {
             setSelectedColumnId('leads');
             setIsFormOpen(true);
           }}
-          className="bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-opacity"
+          className="w-full sm:w-auto bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-opacity"
         >
           <Plus size={18} />
           Nova Negociação
@@ -172,11 +172,11 @@ const Pipeline = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-x-auto overflow-y-hidden flex gap-6 pb-4">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden flex gap-4 sm:gap-6 pb-2 sm:pb-4 snap-x snap-mandatory">
         {Object.values(columns).map(column => (
           <div 
             key={column.id}
-            className="flex flex-col w-[320px] shrink-0 bg-slate-100 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800"
+            className="flex flex-col w-[min(22rem,88vw)] sm:w-[320px] shrink-0 snap-start bg-slate-100 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, column.id)}
           >
@@ -215,8 +215,8 @@ const Pipeline = () => {
                       {item.value}
                     </p>
                     
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-700">
-                      <div className="flex items-center gap-1 truncate max-w-[120px]">
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-700 gap-2">
+                      <div className="flex items-center gap-1 truncate min-w-0 max-w-[140px]">
                         <User size={12} />
                         <span className="truncate">{item.client}</span>
                       </div>
