@@ -6,6 +6,8 @@ import './App.css';
 
 // Lazy loading for code splitting
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
+const HomePage = lazy(() => import('./features/home/Home'));
+const AboutPage = lazy(() => import('./features/about/About'));
 const Properties = lazy(() => import('./features/properties/Properties'));
 const Clientes = lazy(() => import('./features/clientes/Clientes'));
 const Contratos = lazy(() => import('./features/contratos/Contratos'));
@@ -34,7 +36,9 @@ function App() {
       <Layout>
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/sobre" element={<AboutPage />} />
             <Route path="/imoveis" element={<Properties />} />
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/contratos" element={<Contratos />} />

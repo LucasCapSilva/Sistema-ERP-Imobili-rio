@@ -1,15 +1,17 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
-import { LayoutDashboard, Home, Users, FileText, Trello, Settings, Menu, Bell, Search, Sun, Moon } from 'lucide-react';
+import { House, LayoutDashboard, Building2, Users, FileText, Trello, Settings, Info, Menu, Bell, Search, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Home, label: 'Imóveis', path: '/imoveis' },
+  { icon: House, label: 'Início', path: '/' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Building2, label: 'Imóveis', path: '/imoveis' },
   { icon: Users, label: 'Clientes', path: '/clientes' },
   { icon: FileText, label: 'Contratos', path: '/contratos' },
   { icon: Trello, label: 'Pipeline', path: '/pipeline' },
+  { icon: Info, label: 'Sobre', path: '/sobre' },
   { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
 
@@ -23,14 +25,14 @@ const Sidebar = () => {
       animate={{ 
         width: isSidebarOpen ? 260 : 80,
       }}
-      className="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 z-20 hidden md:flex"
+      className="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 z-20 hidden lg:flex"
     >
       <div className="h-16 flex items-center px-4 border-b border-slate-200 dark:border-slate-800 overflow-hidden shrink-0">
         <div 
           className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg"
           style={{ backgroundColor: 'var(--color-primary)' }}
         >
-          <Home size={20} />
+          <Building2 size={20} />
         </div>
         <AnimatePresence>
           {isSidebarOpen && (
@@ -118,7 +120,7 @@ const MobileNav = () => {
   const location = useLocation();
 
   return (
-    <nav className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
+    <nav className="lg:hidden border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
       <div className="flex items-center gap-2 overflow-x-auto px-4 py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path ||
@@ -153,7 +155,7 @@ const Header = () => {
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleSidebar}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors hidden md:block"
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors hidden lg:block"
         >
           <Menu size={20} />
         </button>
