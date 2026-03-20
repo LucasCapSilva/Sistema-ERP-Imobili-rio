@@ -1,72 +1,61 @@
-import { useEffect, useState } from 'react';
-import type { FormEvent } from 'react';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Eye, Gem, Medal, Handshake, Building2, Mail, Phone, UserRound } from 'lucide-react';
+import { Blocks, CheckCircle2, Database, LayoutPanelTop, Rocket, ServerCog, Sparkles, Target } from 'lucide-react';
 
-const timeline = [
+const technologies = [
+  { area: 'Frontend', stack: 'React, TypeScript, Vite, Tailwind CSS e Framer Motion' },
+  { area: 'Backend', stack: 'C# com ASP.NET Core Web API para serviços de negócio e integrações' },
+  { area: 'Dados', stack: 'SQL Server para armazenamento transacional, relatórios e auditoria operacional' },
+  { area: 'Arquitetura', stack: 'APIs REST, separação por camadas, estado global com Zustand e roteamento SPA' },
+];
+
+const objectives = [
+  'Demonstrar um ERP imobiliário completo com foco em produtividade comercial e governança operacional.',
+  'Exibir uma arquitetura escalável para gestão de imóveis, clientes, contratos e pipeline de negociações.',
+  'Evidenciar como dados estruturados e automações suportam decisões rápidas de vendas e locação.',
+];
+
+const demoFeatures = [
+  'Dashboard analítico com indicadores de receita, contratos e performance de carteira.',
+  'Gestão de imóveis com filtros avançados, cadastro detalhado e atualização de portfólio.',
+  'Módulo de clientes com histórico de relacionamento e dados consolidados para follow-up.',
+  'Controle de contratos com fluxo de criação, status e acompanhamento de prazos.',
+  'Pipeline comercial visual para evolução das negociações e priorização de oportunidades.',
+  'Personalização white-label de identidade visual para demonstrações em diferentes marcas.',
+];
+
+const architectureLayers = [
   {
-    year: '2018',
-    title: 'Fundação da operação',
-    description: 'Nasce a proposta de unificar captação, vendas e pós-venda em uma plataforma imobiliária moderna.',
+    icon: LayoutPanelTop,
+    title: 'Camada de Apresentação',
+    description: 'Interface React responsiva com navegação por módulos, componentes reutilizáveis e experiência fluida.',
   },
   {
-    year: '2020',
-    title: 'Evolução para SaaS',
-    description: 'Lançamento da versão cloud com módulos de CRM, contratos e análises financeiras.',
+    icon: ServerCog,
+    title: 'Camada de Aplicação',
+    description: 'Serviços ASP.NET Core em C# para regras de negócio, validações, integrações e segurança da API.',
   },
   {
-    year: '2023',
-    title: 'Expansão nacional',
-    description: 'Adoção por redes de imobiliárias em múltiplas regiões, com foco em performance comercial.',
-  },
-  {
-    year: '2026',
-    title: 'Plataforma inteligente',
-    description: 'Integrações estratégicas e visão orientada por dados para decisões mais rápidas.',
+    icon: Database,
+    title: 'Camada de Persistência',
+    description: 'SQL Server modelando entidades de imóveis, clientes, contratos e trilha de auditoria.',
   },
 ];
 
-const principles = [
+const useCases = [
   {
-    title: 'Missão',
-    description: 'Simplificar a gestão imobiliária com tecnologia confiável e foco total em resultado.',
-    icon: Target,
+    title: 'Operação diária de imobiliárias',
+    description: 'Gestores e corretores centralizam processos de captação, atendimento e fechamento em uma única plataforma.',
   },
   {
-    title: 'Visão',
-    description: 'Ser referência em transformação digital para imobiliárias na América Latina.',
-    icon: Eye,
+    title: 'Apresentação de conceito para clientes',
+    description: 'Times de produto e comercial usam o sistema para demonstrar recursos típicos de um ERP setorial.',
   },
   {
-    title: 'Valores',
-    description: 'Transparência, inovação contínua, excelência no atendimento e compromisso com o cliente.',
-    icon: Gem,
+    title: 'Validação técnica de arquitetura',
+    description: 'Equipes de tecnologia avaliam padrões de frontend, backend e banco relacional com cenário realista.',
   },
 ];
-
-const team = [
-  {
-    name: 'Mariana Costa',
-    role: 'CEO & Estratégia',
-    bio: 'Especialista em operações imobiliárias com foco em expansão comercial e experiência do cliente.',
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    name: 'Rafael Mendes',
-    role: 'CTO',
-    bio: 'Lidera arquitetura de produto, performance da plataforma e roadmap de integrações.',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    name: 'Camila Rocha',
-    role: 'Head de Sucesso do Cliente',
-    bio: 'Atua na evolução contínua de processos e no ganho de produtividade de equipes imobiliárias.',
-    image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
-  },
-];
-
-const certifications = ['ISO 9001 - Gestão de Qualidade', 'LGPD Ready - Governança e proteção de dados', 'Programa Parceiro PropTech Brasil'];
-const partnerships = ['PortalZap', 'VivaReal', 'Rede Crédito Fácil', 'Associação Nacional do Mercado Imobiliário'];
 
 const setMetaTag = (name: string, content: string, attribute: 'name' | 'property' = 'name') => {
   const selector = `${attribute}="${name}"`;
@@ -82,228 +71,173 @@ const setMetaTag = (name: string, content: string, attribute: 'name' | 'property
 };
 
 const AboutPage = () => {
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
   useEffect(() => {
     document.title = 'Sobre | ERP Imobiliário';
-    setMetaTag('description', 'Conheça a história, missão e equipe do ERP Imobiliário, referência em tecnologia para o setor.');
+    setMetaTag('description', 'Visão técnica da aplicação demonstrativa ERP Imobiliário com React, C#, ASP.NET Core e SQL Server.');
     setMetaTag('og:title', 'Sobre | ERP Imobiliário', 'property');
-    setMetaTag('og:description', 'Saiba como o ERP Imobiliário conecta inovação, desempenho e confiança para imobiliárias.', 'property');
+    setMetaTag('og:description', 'Conheça arquitetura, stack e funcionalidades do ERP Imobiliário demonstrativo.', 'property');
   }, []);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSubmitted(true);
-    event.currentTarget.reset();
-  };
 
   return (
     <div className="space-y-8 sm:space-y-10">
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-primary)]">Sobre a empresa</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">Tecnologia imobiliária com visão de longo prazo</h1>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-primary)]">Sobre a aplicação</p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
+          ERP Imobiliário demonstrativo para apresentação técnica de produto
+        </h1>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
-          Unimos expertise imobiliária e engenharia de software para criar uma plataforma robusta, acessível e orientada por resultados.
+          Esta solução foi criada para representar, de forma prática e profissional, as capacidades típicas de um ERP imobiliário moderno. O foco é demonstrar arquitetura, fluxo de dados, módulos de negócio e experiência de uso em um cenário realista.
         </p>
       </section>
 
-      <section aria-labelledby="timeline-title" className="space-y-4">
-        <h2 id="timeline-title" className="text-2xl font-bold text-slate-900 dark:text-white">
-          Nossa história
-        </h2>
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-          <ol className="space-y-6">
-            {timeline.map((item, index) => (
-              <motion.li
-                key={item.year}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.07 }}
-                className="grid grid-cols-[auto_1fr] gap-4"
-              >
-                <div className="flex flex-col items-center">
-                  <span className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-bold text-white">{item.year}</span>
-                  {index < timeline.length - 1 && <span className="mt-2 h-full w-px bg-slate-200 dark:bg-slate-700" />}
-                </div>
-                <div className="pb-4">
-                  <h3 className="font-semibold text-slate-900 dark:text-white">{item.title}</h3>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.description}</p>
-                </div>
-              </motion.li>
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <motion.article
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        >
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
+            <Blocks size={20} className="text-[var(--color-primary)]" />
+            Tecnologia utilizada
+          </h2>
+          <div className="space-y-3">
+            {technologies.map((item) => (
+              <article key={item.area} className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.area}</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.stack}</p>
+              </article>
             ))}
-          </ol>
-        </div>
+          </div>
+        </motion.article>
+
+        <motion.article
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+          className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        >
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
+            <Target size={20} className="text-[var(--color-primary)]" />
+            Objetivos principais
+          </h2>
+          <ul className="space-y-3">
+            {objectives.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <CheckCircle2 size={16} className="mt-0.5 text-[var(--color-primary)]" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </motion.article>
       </section>
 
-      <section aria-labelledby="principios-title" className="space-y-4">
-        <h2 id="principios-title" className="text-2xl font-bold text-slate-900 dark:text-white">
-          Missão, visão e valores
+      <section aria-labelledby="features-title" className="space-y-4">
+        <h2 id="features-title" className="text-2xl font-bold text-slate-900 dark:text-white">
+          Funcionalidades demonstrativas e recursos disponíveis
         </h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {principles.map((principle, index) => (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {demoFeatures.map((feature, index) => (
             <motion.article
-              key={principle.title}
-              initial={{ opacity: 0, y: 14 }}
+              key={feature}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08 }}
+              transition={{ delay: index * 0.05 }}
               className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
             >
-              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-[var(--color-primary)] dark:bg-slate-800">
-                <principle.icon size={20} />
-              </div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">{principle.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{principle.description}</p>
+              <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{feature}</p>
             </motion.article>
           ))}
         </div>
       </section>
 
-      <section aria-labelledby="equipe-title" className="space-y-4">
-        <h2 id="equipe-title" className="text-2xl font-bold text-slate-900 dark:text-white">
-          Equipe executiva
+      <section aria-labelledby="architecture-title" className="space-y-4">
+        <h2 id="architecture-title" className="text-2xl font-bold text-slate-900 dark:text-white">
+          Arquitetura do sistema
         </h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {team.map((member, index) => (
+          {architectureLayers.map((layer, index) => (
             <motion.article
-              key={member.name}
+              key={layer.title}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.09 }}
-              className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
             >
-              <img
-                src={member.image}
-                alt={`Foto de ${member.name}`}
-                className="h-56 w-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-              <div className="p-5">
-                <h3 className="font-semibold text-slate-900 dark:text-white">{member.name}</h3>
-                <p className="text-sm text-[var(--color-primary)]">{member.role}</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{member.bio}</p>
+              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-[var(--color-primary)] dark:bg-slate-800">
+                <layer.icon size={20} />
               </div>
+              <h3 className="font-semibold text-slate-900 dark:text-white">{layer.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{layer.description}</p>
             </motion.article>
           ))}
         </div>
       </section>
 
-      <section aria-labelledby="certificacoes-title" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <article className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 id="certificacoes-title" className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
-            <Medal size={20} className="text-[var(--color-primary)]" />
-            Certificações
-          </h2>
-          <ul className="space-y-2">
-            {certifications.map((item) => (
-              <li key={item} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
-                <span className="mt-1 h-2 w-2 rounded-full bg-[var(--color-primary)]" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </article>
-        <article className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
-            <Handshake size={20} className="text-[var(--color-primary)]" />
-            Parcerias estratégicas
-          </h2>
-          <ul className="space-y-2">
-            {partnerships.map((item) => (
-              <li key={item} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
-                <span className="mt-1 h-2 w-2 rounded-full bg-[var(--color-primary)]" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </article>
+      <section aria-labelledby="cases-title" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {useCases.map((item, index) => (
+          <motion.article
+            key={item.title}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.06 }}
+            className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+          >
+            <h2 id={index === 0 ? 'cases-title' : undefined} className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+              <Rocket size={18} className="text-[var(--color-primary)]" />
+              {item.title}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{item.description}</p>
+          </motion.article>
+        ))}
       </section>
 
-      <section aria-labelledby="contato-title" className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-        <h2 id="contato-title" className="text-2xl font-bold text-slate-900 dark:text-white">
-          Fale com nossa equipe
+      <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
+          <Sparkles size={20} className="text-[var(--color-primary)]" />
+          Características técnicas relevantes
         </h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Envie sua mensagem e retornaremos com uma proposta personalizada para sua operação.
-        </p>
-        <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="space-y-3 lg:col-span-1">
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <Building2 size={16} className="text-[var(--color-primary)]" />
-              ERP Imobiliário Brasil
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <Mail size={16} className="text-[var(--color-primary)]" />
-              contato@erpimobiliario.com
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <Phone size={16} className="text-[var(--color-primary)]" />
-              +55 (11) 4000-1234
-            </div>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-4 lg:col-span-2" aria-label="Formulário de contato">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="nome" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Nome
-                </label>
-                <div className="relative">
-                  <UserRound size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="nome"
-                    name="nome"
-                    type="text"
-                    required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-[var(--color-primary)] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                    placeholder="Seu nome"
-                    autoComplete="name"
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  E-mail
-                </label>
-                <div className="relative">
-                  <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-[var(--color-primary)] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                    placeholder="voce@empresa.com"
-                    autoComplete="email"
-                  />
-                </div>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="mensagem" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Mensagem
-              </label>
-              <textarea
-                id="mensagem"
-                name="mensagem"
-                required
-                rows={5}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-[var(--color-primary)] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                placeholder="Conte um pouco sobre seu cenário atual..."
-              />
-            </div>
-            <button
-              type="submit"
-              className="inline-flex items-center rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
-            >
-              Enviar mensagem
-            </button>
-            {isSubmitted && (
-              <p role="status" className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                Mensagem enviada com sucesso. Retornaremos em breve.
-              </p>
-            )}
-          </form>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <article className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+            Estrutura modular por domínio de negócio, facilitando evolução de funcionalidades sem acoplamento excessivo.
+          </article>
+          <article className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+            Preparação para APIs REST em ASP.NET Core com autenticação, autorização e versionamento de endpoints.
+          </article>
+          <article className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+            Persistência em SQL Server adequada para cenários de alto volume de contratos e transações imobiliárias.
+          </article>
+          <article className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+            Interface otimizada para desktop e mobile, com foco em desempenho e usabilidade operacional diária.
+          </article>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Exemplos práticos de uso
+        </h2>
+        <ul className="mt-4 space-y-3">
+          <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <CheckCircle2 size={16} className="mt-0.5 text-[var(--color-primary)]" />
+            <span>Registrar novo imóvel, vinculá-lo a clientes interessados e avançar a oportunidade no pipeline.</span>
+          </li>
+          <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <CheckCircle2 size={16} className="mt-0.5 text-[var(--color-primary)]" />
+            <span>Gerar contrato e monitorar status de assinatura, vigência e valor consolidado no dashboard.</span>
+          </li>
+          <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <CheckCircle2 size={16} className="mt-0.5 text-[var(--color-primary)]" />
+            <span>Comparar desempenho por período para direcionar ações comerciais com base em métricas.</span>
+          </li>
+        </ul>
+      </section>
+      <section className="rounded-2xl border border-slate-100 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-900/70">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          Contexto demonstrativo
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          Esta aplicação é demonstrativa e foi construída para apresentar potencial técnico, fluxo funcional e padrões de implementação comuns em ERPs imobiliários. Os módulos e dados exibidos simulam um ambiente corporativo para avaliação de produto, arquitetura e experiência de uso.
+        </p>
       </section>
     </div>
   );
