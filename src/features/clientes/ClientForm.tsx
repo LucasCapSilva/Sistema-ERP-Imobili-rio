@@ -32,7 +32,7 @@ export interface FormattedClient {
 interface ClientFormProps {
   client?: FormattedClient;
   onClose: () => void;
-  onSubmit: (data: FormattedClient) => void;
+  onSubmit: (data: FormattedClient) => Promise<void> | void;
 }
 
 export const ClientForm = ({ client, onClose, onSubmit }: ClientFormProps) => {
@@ -65,7 +65,6 @@ export const ClientForm = ({ client, onClose, onSubmit }: ClientFormProps) => {
 
   const handleFormSubmit = async (data: ClientFormData) => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
     const formattedData = {
       id: client ? client.id : `cli-${data.email.split('@')[0]}-${data.phone.replace(/\D/g, '').slice(-6)}`,
@@ -80,7 +79,7 @@ export const ClientForm = ({ client, onClose, onSubmit }: ClientFormProps) => {
       createdAt: client ? client.createdAt : new Date().toISOString(),
     };
     
-    onSubmit(formattedData);
+    await onSubmit(formattedData);
     setIsSubmitting(false);
     onClose();
   };

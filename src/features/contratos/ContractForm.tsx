@@ -4,8 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
 import { X, Check, AlertCircle, FileSignature } from 'lucide-react';
-import clientsData from '../../data/clients.json';
-import propertiesData from '../../data/properties.json';
 
 const contractSchema = z.object({
   type: z.string().min(1, 'Selecione um tipo'),
@@ -28,6 +26,8 @@ export interface FormattedContract extends ContractFormData {
 
 interface ContractFormProps {
   contract?: FormattedContract;
+  clients: Array<{ id: string; name: string; type?: string }>;
+  properties: Array<{ id: string; title: string; type?: string; price: number }>;
   initialData?: {
     type?: string;
     clientId?: string;
@@ -38,10 +38,10 @@ interface ContractFormProps {
     endDate?: string;
   };
   onClose: () => void;
-  onSubmit: (data: FormattedContract) => void;
+  onSubmit: (data: FormattedContract) => Promise<void> | void;
 }
 
-export const ContractForm = ({ contract, initialData, onClose, onSubmit }: ContractFormProps) => {
+export const ContractForm = ({ contract, clients, properties, initialData, onClose, onSubmit }: ContractFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
 
@@ -89,16 +89,15 @@ export const ContractForm = ({ contract, initialData, onClose, onSubmit }: Contr
   useEffect(() => {
     // Auto-fill value based on property if not editing
     if (!contract && watchPropertyId) {
-      const property = propertiesData.find(p => p.id === watchPropertyId);
+      const property = properties.find(p => p.id === watchPropertyId);
       if (property) {
         setValue('value', property.price);
       }
     }
-  }, [watchPropertyId, contract, setValue]);
+  }, [watchPropertyId, contract, properties, setValue]);
 
   const handleFormSubmit = async (data: ContractFormData) => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
     const formattedData = {
       id: contract ? contract.id : `ctrt-${Date.now()}`,
@@ -108,7 +107,7 @@ export const ContractForm = ({ contract, initialData, onClose, onSubmit }: Contr
       signedAt: watchStatus === 'Ativo' ? new Date().toISOString() : null,
     };
     
-    onSubmit(formattedData);
+    await onSubmit(formattedData);
     setIsSubmitting(false);
     onClose();
   };
@@ -183,7 +182,7 @@ export const ContractForm = ({ contract, initialData, onClose, onSubmit }: Contr
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[var(--color-primary)] outline-none transition-all"
                 >
                   <option value="">Selecione...</option>
-                  {clientsData.map(client => (
+                  {clients.map(client => (
                     <option key={client.id} value={client.id}>{client.name} - {client.type}</option>
                   ))}
                 </select>
@@ -197,7 +196,7 @@ export const ContractForm = ({ contract, initialData, onClose, onSubmit }: Contr
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[var(--color-primary)] outline-none transition-all"
                 >
                   <option value="">Selecione...</option>
-                  {propertiesData.map(prop => (
+                  {properties.map(prop => (
                     <option key={prop.id} value={prop.id}>{prop.title} - {prop.type}</option>
                   ))}
                 </select>

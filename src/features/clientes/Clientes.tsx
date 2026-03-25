@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Mail, Phone, User, Download } from 'lucide-react';
 import { ClientForm, type FormattedClient } from './ClientForm';
 import { AdvancedFilter } from '../../components/ui/AdvancedFilter';
-import clientsData from '../../data/clients.json';
+import { createClient, getClients, updateClient, type ClientApiModel } from '../../services/api';
 
 type Client = FormattedClient;
 type ClientFilters = Record<string, string | number | null | undefined>;
@@ -24,11 +24,25 @@ const filterOptions = [
 ];
 
 const Clientes = () => {
-  const [clients, setClients] = useState<Client[]>(clientsData as Client[]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<ClientFilters>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadClients = async () => {
+      try {
+        const response = await getClients({ page: 1, pageSize: 200 });
+        setClients(response.items.map(mapClientFromApi));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadClients();
+  }, []);
 
   const filteredClients = useMemo(() => {
     return clients.filter(client => {
@@ -42,12 +56,29 @@ const Clientes = () => {
     }).slice(0, 50);
   }, [clients, searchTerm, filters]);
 
-  const handleAddClient = (newClient: Client) => {
+  const handleAddClient = async (newClient: Client) => {
     if (selectedClient) {
-      setClients(prev => prev.map(c => c.id === newClient.id ? newClient : c));
-    } else {
-      setClients(prev => [newClient, ...prev]);
+      const updated = await updateClient(newClient.id, {
+        name: newClient.name,
+        email: newClient.email,
+        phone: newClient.phone,
+        type: newClient.type,
+        interestPropertyType: newClient.interest?.propertyType,
+        interestMaxPrice: newClient.interest?.maxPrice
+      });
+      setClients(prev => prev.map(c => c.id === updated.id ? mapClientFromApi(updated) : c));
+      return;
     }
+
+    const created = await createClient({
+      name: newClient.name,
+      email: newClient.email,
+      phone: newClient.phone,
+      type: newClient.type,
+      interestPropertyType: newClient.interest?.propertyType,
+      interestMaxPrice: newClient.interest?.maxPrice
+    });
+    setClients(prev => [mapClientFromApi(created), ...prev]);
   };
 
   const handleExportCSV = () => {
@@ -120,7 +151,7 @@ const Clientes = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredClients.map((client, index) => (
+              {!isLoading && filteredClients.map((client, index) => (
                 <motion.tr 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -179,11 +210,17 @@ const Clientes = () => {
             </tbody>
           </table>
           
-          {filteredClients.length === 0 && (
+          {!isLoading && filteredClients.length === 0 && (
             <div className="p-12 text-center">
               <User className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white">Nenhum cliente encontrado</h3>
               <p className="text-slate-500 mt-1">Tente ajustar seus filtros de busca.</p>
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="p-12 text-center text-slate-500">
+              Carregando clientes...
             </div>
           )}
         </div>
@@ -203,3 +240,18 @@ const Clientes = () => {
 };
 
 export default Clientes;
+
+function mapClientFromApi(client: ClientApiModel): FormattedClient {
+  return {
+    id: client.id,
+    name: client.name,
+    email: client.email,
+    phone: client.phone,
+    type: client.type,
+    interest: client.interest ? {
+      propertyType: client.interest.propertyType,
+      maxPrice: client.interest.maxPrice
+    } : null,
+    createdAt: client.createdAt
+  };
+}

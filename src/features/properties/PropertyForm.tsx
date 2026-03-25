@@ -41,7 +41,7 @@ interface PropertyRecord {
 interface PropertyFormProps {
   property?: PropertyRecord;
   onClose: () => void;
-  onSubmit: (data: PropertyRecord) => void;
+  onSubmit: (data: PropertyRecord) => Promise<void> | void;
 }
 
 export const PropertyForm = ({ property, onClose, onSubmit }: PropertyFormProps) => {
@@ -101,13 +101,11 @@ export const PropertyForm = ({ property, onClose, onSubmit }: PropertyFormProps)
 
   const handleFormSubmit = async (data: PropertyFormData) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
     const fallbackImage = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=1000';
     const generatedId = `prop-${`${data.title}-${data.address}`.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 28)}`;
 
-    onSubmit({
+    await onSubmit({
       id: property?.id ?? generatedId,
       title: data.title,
       type: data.type,

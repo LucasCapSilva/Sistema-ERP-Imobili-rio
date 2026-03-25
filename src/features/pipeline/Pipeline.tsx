@@ -1,64 +1,101 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MoreHorizontal, Plus, Calendar, User, TrendingUp, Clock, DollarSign } from 'lucide-react';
 import { NovaNegociacaoForm } from './NovaNegociacaoForm';
+import { createPipelineDeal, getClients, getPipelineDeals, getProperties, updatePipelineDeal } from '../../services/api';
 
-// Mock data for Kanban
-const initialColumns = {
-  'leads': {
-    id: 'leads',
-    title: 'Leads (Novos)',
-    items: [
-      { id: '1', title: 'Interesse em Casa - Jardins', client: 'Ana Silva', value: 'R$ 2.500.000', date: 'Hoje' },
-      { id: '2', title: 'Apto 2 dorms - Pinheiros', client: 'Carlos Souza', value: 'R$ 850.000', date: 'Ontem' },
-      { id: '3', title: 'Aluguel Comercial - Centro', client: 'Tech Corp', value: 'R$ 15.000/mês', date: 'Há 2 dias' },
-    ]
-  },
-  'visitas': {
-    id: 'visitas',
-    title: 'Visitas Agendadas',
-    items: [
-      { id: '4', title: 'Cobertura Duplex - Moema', client: 'Julia Martins', value: 'R$ 4.200.000', date: 'Amanhã, 14h' },
-      { id: '5', title: 'Terreno em Condomínio', client: 'Eduardo Lima', value: 'R$ 600.000', date: 'Sexta, 10h' },
-    ]
-  },
-  'propostas': {
-    id: 'propostas',
-    title: 'Propostas em Análise',
-    items: [
-      { id: '6', title: 'Apto Studio - Itaim Bibi', client: 'Rafael Costa', value: 'R$ 520.000', date: 'Aguardando Cliente' },
-    ]
-  },
-  'fechamento': {
-    id: 'fechamento',
-    title: 'Em Fechamento',
-    items: [
-      { id: '7', title: 'Casa de Condomínio', client: 'Família Oliveira', value: 'R$ 1.800.000', date: 'Aguardando Assinatura' },
-      { id: '8', title: 'Aluguel - Apto 3 dorms', client: 'Mariana Alves', value: 'R$ 4.500/mês', date: 'Aprovando Crédito' },
-    ]
-  }
+type ColumnId = 'leads' | 'visitas' | 'propostas' | 'fechamento';
+
+interface PipelineItem {
+  id: string;
+  title: string;
+  clientId: string;
+  propertyId: string;
+  client: string;
+  value: number;
+  date: string;
+  lastInteractionAt: string;
+}
+
+interface PipelineColumn {
+  id: ColumnId;
+  title: string;
+  items: PipelineItem[];
+}
+
+const columnTitles: Record<ColumnId, string> = {
+  leads: 'Leads (Novos)',
+  visitas: 'Visitas Agendadas',
+  propostas: 'Propostas em Análise',
+  fechamento: 'Em Fechamento'
 };
 
-type ColumnId = keyof typeof initialColumns;
-type PipelineItem = (typeof initialColumns)[ColumnId]['items'][number];
+const stageOrder: ColumnId[] = ['leads', 'visitas', 'propostas', 'fechamento'];
 
 const Pipeline = () => {
-  const [columns, setColumns] = useState(initialColumns);
+  const [columns, setColumns] = useState<Record<ColumnId, PipelineColumn>>({
+    leads: { id: 'leads', title: columnTitles.leads, items: [] },
+    visitas: { id: 'visitas', title: columnTitles.visitas, items: [] },
+    propostas: { id: 'propostas', title: columnTitles.propostas, items: [] },
+    fechamento: { id: 'fechamento', title: columnTitles.fechamento, items: [] }
+  });
+  const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
+  const [properties, setProperties] = useState<Array<{ id: string; title: string; price: number }>>([]);
   const [draggedItem, setDraggedItem] = useState<{ id: string, sourceColId: string } | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedColumnId, setSelectedColumnId] = useState<ColumnId>('leads');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Metrics calculation
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [dealsResponse, clientsResponse, propertiesResponse] = await Promise.all([
+          getPipelineDeals({ page: 1, pageSize: 400 }),
+          getClients({ page: 1, pageSize: 200 }),
+          getProperties({ page: 1, pageSize: 200 })
+        ]);
+
+        setClients(clientsResponse.items.map(item => ({ id: item.id, name: item.name })));
+        setProperties(propertiesResponse.items.map(item => ({ id: item.id, title: item.title, price: item.price })));
+
+        const grouped: Record<ColumnId, PipelineColumn> = {
+          leads: { id: 'leads', title: columnTitles.leads, items: [] },
+          visitas: { id: 'visitas', title: columnTitles.visitas, items: [] },
+          propostas: { id: 'propostas', title: columnTitles.propostas, items: [] },
+          fechamento: { id: 'fechamento', title: columnTitles.fechamento, items: [] }
+        };
+
+        dealsResponse.items.forEach((deal) => {
+          const columnId = mapStageToColumn(deal.stage);
+          grouped[columnId].items.push({
+            id: deal.id,
+            title: deal.title,
+            clientId: deal.clientId,
+            propertyId: deal.propertyId,
+            client: deal.clientName,
+            value: deal.value,
+            date: formatRelativeDate(deal.lastInteractionAt),
+            lastInteractionAt: deal.lastInteractionAt
+          });
+        });
+
+        setColumns(grouped);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadData();
+  }, []);
+
   const metrics = useMemo(() => {
     let totalDeals = 0;
-    let totalValueStr = 0;
+    let totalValue = 0;
     
     Object.values(columns).forEach(col => {
       totalDeals += col.items.length;
       col.items.forEach(item => {
-        // Parse "R$ 2.500.000" or similar to number
-        const val = item.value.replace(/[^0-9,-]+/g,"").replace('.', '').replace(',', '.');
-        if (val) totalValueStr += Number(val);
+        totalValue += item.value;
       });
     });
 
@@ -66,7 +103,7 @@ const Pipeline = () => {
 
     return {
       totalDeals,
-      totalValue: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValueStr),
+      totalValue: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue),
       conversionRate
     };
   }, [columns]);
@@ -82,7 +119,7 @@ const Pipeline = () => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent, targetColId: string) => {
+  const handleDrop = async (e: React.DragEvent, targetColId: string) => {
     e.preventDefault();
     if (!draggedItem) return;
 
@@ -95,6 +132,15 @@ const Pipeline = () => {
     const item = sourceCol.items.find(i => i.id === id);
     if (!item) return;
 
+    await updatePipelineDeal(item.id, {
+      title: item.title,
+      clientId: item.clientId,
+      propertyId: item.propertyId,
+      value: item.value,
+      stage: targetColId,
+      lastInteractionAt: new Date().toISOString()
+    });
+
     setColumns({
       ...columns,
       [sourceColId]: {
@@ -103,21 +149,41 @@ const Pipeline = () => {
       },
       [targetColId]: {
         ...targetCol,
-        items: [...targetCol.items, item]
+        items: [...targetCol.items, { ...item, date: 'Hoje', lastInteractionAt: new Date().toISOString() }]
       }
     });
     setDraggedItem(null);
   };
 
-  const handleAddNegociacao = (data: PipelineItem & { columnId: string }) => {
+  const handleAddNegociacao = async (data: PipelineItem & { columnId: string }) => {
     const { columnId, ...item } = data;
     if (!(columnId in columns)) return;
     const typedColumnId = columnId as ColumnId;
+    const created = await createPipelineDeal({
+      title: item.title,
+      clientId: item.clientId,
+      propertyId: item.propertyId,
+      value: item.value,
+      stage: typedColumnId,
+      lastInteractionAt: new Date().toISOString()
+    });
+
+    const mappedItem: PipelineItem = {
+      id: created.id,
+      title: created.title,
+      clientId: created.clientId,
+      propertyId: created.propertyId,
+      client: created.clientName,
+      value: created.value,
+      date: formatRelativeDate(created.lastInteractionAt),
+      lastInteractionAt: created.lastInteractionAt
+    };
+
     setColumns((prev) => ({
       ...prev,
       [typedColumnId]: {
         ...prev[typedColumnId],
-        items: [...prev[typedColumnId].items, item]
+        items: [...prev[typedColumnId].items, mappedItem]
       }
     }));
   };
@@ -173,7 +239,9 @@ const Pipeline = () => {
       </div>
 
       <div className="flex-1 overflow-x-auto overflow-y-hidden flex gap-4 sm:gap-6 pb-2 sm:pb-4 snap-x snap-mandatory">
-        {Object.values(columns).map(column => (
+        {!isLoading && stageOrder.map((columnId) => {
+          const column = columns[columnId];
+          return (
           <div 
             key={column.id}
             className="flex flex-col w-[min(22rem,88vw)] sm:w-[320px] shrink-0 snap-start bg-slate-100 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800"
@@ -212,7 +280,7 @@ const Pipeline = () => {
                     </div>
                     
                     <p className="text-[var(--color-primary)] font-bold text-sm mb-3">
-                      {item.value}
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.value)}
                     </p>
                     
                     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-700 gap-2">
@@ -241,13 +309,22 @@ const Pipeline = () => {
               <Plus size={16} /> Adicionar
             </button>
           </div>
-        ))}
+          );
+        })}
+
+        {isLoading && (
+          <div className="text-slate-500 px-2 py-8">
+            Carregando pipeline...
+          </div>
+        )}
       </div>
 
       <AnimatePresence>
         {isFormOpen && (
           <NovaNegociacaoForm 
-            columns={Object.values(columns)}
+            columns={stageOrder.map((columnId) => columns[columnId])}
+            clients={clients}
+            properties={properties}
             initialColumnId={selectedColumnId}
             onClose={() => setIsFormOpen(false)} 
             onSubmit={handleAddNegociacao} 
@@ -259,3 +336,24 @@ const Pipeline = () => {
 };
 
 export default Pipeline;
+
+function mapStageToColumn(stage: string): ColumnId {
+  if (stage === 'visitas' || stage === 'propostas' || stage === 'fechamento') {
+    return stage;
+  }
+  return 'leads';
+}
+
+function formatRelativeDate(value: string): string {
+  const date = new Date(value);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (diff < dayMs) {
+    return 'Hoje';
+  }
+  if (diff < dayMs * 2) {
+    return 'Ontem';
+  }
+  return `Há ${Math.floor(diff / dayMs)} dias`;
+}

@@ -4,8 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
 import { X, Check, AlertCircle } from 'lucide-react';
-import clientsData from '../../data/clients.json';
-import propertiesData from '../../data/properties.json';
 
 const negociacaoSchema = z.object({
   title: z.string().min(3, 'O título deve ter no mínimo 3 caracteres'),
@@ -26,20 +24,25 @@ interface PipelineColumn {
 interface PipelineItem {
   id: string;
   title: string;
+  clientId: string;
+  propertyId: string;
   client: string;
-  value: string;
+  value: number;
   date: string;
+  lastInteractionAt: string;
   columnId: string;
 }
 
 interface NovaNegociacaoFormProps {
   onClose: () => void;
-  onSubmit: (data: PipelineItem) => void;
+  onSubmit: (data: PipelineItem) => Promise<void> | void;
   columns: PipelineColumn[];
+  clients: Array<{ id: string; name: string }>;
+  properties: Array<{ id: string; title: string; price: number }>;
   initialColumnId: string;
 }
 
-export const NovaNegociacaoForm = ({ onClose, onSubmit, columns, initialColumnId }: NovaNegociacaoFormProps) => {
+export const NovaNegociacaoForm = ({ onClose, onSubmit, columns, clients, properties, initialColumnId }: NovaNegociacaoFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<NegotiationFormInput, undefined, NegotiationFormData>({
@@ -58,13 +61,13 @@ export const NovaNegociacaoForm = ({ onClose, onSubmit, columns, initialColumnId
   // Auto-fill value and title when property is selected
   useEffect(() => {
     if (watchPropertyId) {
-      const property = propertiesData.find(p => p.id === watchPropertyId);
+      const property = properties.find(p => p.id === watchPropertyId);
       if (property) {
         setValue('value', property.price);
         setValue('title', `Negociação: ${property.title}`);
       }
     }
-  }, [watchPropertyId, setValue]);
+  }, [watchPropertyId, properties, setValue]);
 
   useEffect(() => {
     setValue('columnId', initialColumnId);
@@ -72,20 +75,22 @@ export const NovaNegociacaoForm = ({ onClose, onSubmit, columns, initialColumnId
 
   const handleFormSubmit = async (data: NegotiationFormData) => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
     
-    const client = clientsData.find(c => c.id === data.clientId);
+    const client = clients.find(c => c.id === data.clientId);
     
     const formattedData = {
       id: Math.random().toString(36).substr(2, 9),
       title: data.title,
+      clientId: data.clientId,
+      propertyId: data.propertyId,
       client: client ? client.name : 'Cliente',
-      value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.value),
+      value: data.value,
       date: 'Hoje',
+      lastInteractionAt: new Date().toISOString(),
       columnId: data.columnId
     };
     
-    onSubmit(formattedData);
+    await onSubmit(formattedData);
     setIsSubmitting(false);
     onClose();
   };
@@ -134,7 +139,7 @@ export const NovaNegociacaoForm = ({ onClose, onSubmit, columns, initialColumnId
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[var(--color-primary)] outline-none transition-all"
                 >
                   <option value="">Selecione o cliente...</option>
-                  {clientsData.map(client => (
+                  {clients.map(client => (
                     <option key={client.id} value={client.id}>{client.name}</option>
                   ))}
                 </select>
@@ -148,7 +153,7 @@ export const NovaNegociacaoForm = ({ onClose, onSubmit, columns, initialColumnId
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[var(--color-primary)] outline-none transition-all"
                 >
                   <option value="">Selecione o imóvel...</option>
-                  {propertiesData.map(prop => (
+                  {properties.map(prop => (
                     <option key={prop.id} value={prop.id}>{prop.title}</option>
                   ))}
                 </select>

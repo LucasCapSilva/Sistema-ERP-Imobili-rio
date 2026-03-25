@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Home, TrendingUp, Users, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { getDashboardSummary, type DashboardSummaryApiModel } from '../../services/api';
 
 type PeriodFilter = '30d' | 'quarter' | 'year';
 
@@ -142,8 +143,36 @@ const StatCard = ({ title, value, icon: Icon, trend, trendUp, delay }: StatCardP
 
 const Dashboard = () => {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
+  const [summary, setSummary] = useState<DashboardSummaryApiModel | null>(null);
 
-  const currentRange = useMemo(() => dashboardByPeriod[periodFilter], [periodFilter]);
+  useEffect(() => {
+    const loadSummary = async () => {
+      const data = await getDashboardSummary();
+      setSummary(data);
+    };
+    void loadSummary();
+  }, []);
+
+  const currentRange = useMemo(() => {
+    const base = dashboardByPeriod[periodFilter];
+    if (!summary) {
+      return base;
+    }
+
+    return {
+      ...base,
+      stats: {
+        totalProperties: { value: summary.totalProperties.toLocaleString('pt-BR'), trend: '+0.0%', trendUp: true },
+        newClients: { value: summary.totalClients.toLocaleString('pt-BR'), trend: '+0.0%', trendUp: true },
+        closedContracts: { value: summary.totalContracts.toLocaleString('pt-BR'), trend: '+0.0%', trendUp: true },
+        monthlyRevenue: {
+          value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(summary.totalPipelineValue),
+          trend: '+0.0%',
+          trendUp: true
+        }
+      }
+    };
+  }, [periodFilter, summary]);
 
   return (
     <div className="space-y-6">

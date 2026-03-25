@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { motion } from 'framer-motion';
 import { Save, Palette, Building, Image as ImageIcon } from 'lucide-react';
+import { getCurrentSetting, updateSetting } from '../../services/api';
 
 const presetColors = [
   { name: 'Slate (Default)', value: '#0f172a' },
@@ -25,21 +26,56 @@ const Settings = () => {
   const { config, setConfig } = useAppStore();
   const [formData, setFormData] = useState(config);
   const [saved, setSaved] = useState(false);
+  const [settingId, setSettingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setFormData(config);
   }, [config]);
 
-  const handleSubmit = (e: FormEvent) => {
+  useEffect(() => {
+    const loadCurrentSetting = async () => {
+      try {
+        const current = await getCurrentSetting();
+        const normalizedPrimaryColor = normalizeHexColor(current.primaryColor);
+        const normalizedConfig = {
+          companyName: current.companyName,
+          primaryColor: normalizedPrimaryColor,
+          logoUrl: current.logoUrl
+        };
+        setSettingId(current.id);
+        setConfig(normalizedConfig);
+        setFormData(normalizedConfig);
+        document.documentElement.style.setProperty('--color-primary', normalizedPrimaryColor);
+      } catch {
+        setSettingId(null);
+      }
+    };
+
+    void loadCurrentSetting();
+  }, [setConfig]);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!settingId) {
+      return;
+    }
+    setIsSaving(true);
     const normalizedPrimaryColor = normalizeHexColor(formData.primaryColor);
     const normalizedConfig = { ...formData, primaryColor: normalizedPrimaryColor };
+    await updateSetting(settingId, {
+      companyName: normalizedConfig.companyName,
+      primaryColor: normalizedConfig.primaryColor,
+      logoUrl: normalizedConfig.logoUrl,
+      isActive: true
+    });
     setConfig(normalizedConfig);
     setFormData(normalizedConfig);
     document.documentElement.style.setProperty('--color-primary', normalizedPrimaryColor);
 
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+    setIsSaving(false);
   };
 
   return (
@@ -141,10 +177,11 @@ const Settings = () => {
           </p>
           <button 
             type="submit"
+            disabled={isSaving || !settingId}
             className="px-6 py-2.5 bg-[var(--color-primary)] hover:opacity-90 text-white rounded-xl font-medium flex items-center gap-2 transition-all shadow-sm"
           >
             <Save size={18} />
-            {saved ? 'Configurações Salvas!' : 'Salvar Alterações'}
+            {isSaving ? 'Salvando...' : saved ? 'Configurações Salvas!' : 'Salvar Alterações'}
           </button>
         </div>
       </motion.form>

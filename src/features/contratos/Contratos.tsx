@@ -1,11 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, FileText, AlertTriangle, CheckCircle, Clock, Edit } from 'lucide-react';
-import contractsData from '../../data/contracts.json';
-import clientsData from '../../data/clients.json';
-import propertiesData from '../../data/properties.json';
 import { ContractForm, type FormattedContract } from './ContractForm';
 import { AdvancedFilter } from '../../components/ui/AdvancedFilter';
+import { createContract, getClients, getContracts, getProperties, updateContract, type ContractApiModel } from '../../services/api';
 
 type Contract = FormattedContract;
 type ContractFilters = Record<string, string | number | null | undefined>;
@@ -24,17 +22,36 @@ const filterOptions = [
 ];
 
 const Contratos = () => {
-  const [contracts, setContracts] = useState<Contract[]>(
-    contractsData.map(contract => ({ ...contract, signedAt: null }))
-  );
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [clients, setClients] = useState<Array<{ id: string; name: string; type: string }>>([]);
+  const [properties, setProperties] = useState<Array<{ id: string; title: string; type: string; price: number }>>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<ContractFilters>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Map IDs to names for display
-  const getClientName = (id: string) => clientsData.find(c => c.id === id)?.name || 'Cliente não encontrado';
-  const getPropertyTitle = (id: string) => propertiesData.find(p => p.id === id)?.title || 'Imóvel não encontrado';
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [contractsResponse, clientsResponse, propertiesResponse] = await Promise.all([
+          getContracts({ page: 1, pageSize: 200 }),
+          getClients({ page: 1, pageSize: 200 }),
+          getProperties({ page: 1, pageSize: 200 })
+        ]);
+        setContracts(contractsResponse.items.map(mapContractFromApi));
+        setClients(clientsResponse.items.map(item => ({ id: item.id, name: item.name, type: item.type })));
+        setProperties(propertiesResponse.items.map(item => ({ id: item.id, title: item.title, type: item.type, price: item.price })));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadData();
+  }, []);
+
+  const getClientName = (id: string) => clients.find(c => c.id === id)?.name || 'Cliente não encontrado';
+  const getPropertyTitle = (id: string) => properties.find(p => p.id === id)?.title || 'Imóvel não encontrado';
 
   const filteredContracts = useMemo(() => {
     return contracts.filter(contract => {
@@ -49,12 +66,33 @@ const Contratos = () => {
     }).slice(0, 50);
   }, [contracts, searchTerm, filters]);
 
-  const handleSaveContract = (newContract: Contract) => {
+  const handleSaveContract = async (newContract: Contract) => {
     if (selectedContract) {
-      setContracts(prev => prev.map(c => c.id === newContract.id ? newContract : c));
-    } else {
-      setContracts(prev => [newContract, ...prev]);
+      const updated = await updateContract(newContract.id, {
+        type: newContract.type,
+        propertyId: newContract.propertyId,
+        clientId: newContract.clientId,
+        value: newContract.value,
+        status: newContract.status,
+        startDate: newContract.startDate,
+        endDate: newContract.endDate,
+        signedAt: newContract.signedAt
+      });
+      setContracts(prev => prev.map(c => c.id === updated.id ? mapContractFromApi(updated) : c));
+      return;
     }
+
+    const created = await createContract({
+      type: newContract.type,
+      propertyId: newContract.propertyId,
+      clientId: newContract.clientId,
+      value: newContract.value,
+      status: newContract.status,
+      startDate: newContract.startDate,
+      endDate: newContract.endDate,
+      signedAt: newContract.signedAt
+    });
+    setContracts(prev => [mapContractFromApi(created), ...prev]);
   };
 
   const getStatusBadge = (status: string, endDate: string) => {
@@ -104,7 +142,7 @@ const Contratos = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filteredContracts.map((contract, index) => (
+        {!isLoading && filteredContracts.map((contract, index) => (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -163,11 +201,17 @@ const Contratos = () => {
           </motion.div>
         ))}
 
-        {filteredContracts.length === 0 && (
+        {!isLoading && filteredContracts.length === 0 && (
           <div className="col-span-full p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
             <FileText className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white">Nenhum contrato encontrado</h3>
             <p className="text-slate-500 mt-1">Tente ajustar seus filtros de busca.</p>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="col-span-full p-12 text-center text-slate-500">
+            Carregando contratos...
           </div>
         )}
       </div>
@@ -176,6 +220,8 @@ const Contratos = () => {
         {isFormOpen && (
           <ContractForm 
             contract={selectedContract ?? undefined}
+            clients={clients}
+            properties={properties}
             onClose={() => setIsFormOpen(false)} 
             onSubmit={handleSaveContract} 
           />
@@ -186,3 +232,17 @@ const Contratos = () => {
 };
 
 export default Contratos;
+
+function mapContractFromApi(contract: ContractApiModel): FormattedContract {
+  return {
+    id: contract.id,
+    type: contract.type,
+    propertyId: contract.propertyId,
+    clientId: contract.clientId,
+    value: contract.value,
+    status: contract.status,
+    startDate: contract.startDate,
+    endDate: contract.endDate,
+    signedAt: contract.signedAt ?? null
+  };
+}
