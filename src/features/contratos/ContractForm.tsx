@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
 import { X, Check, AlertCircle, FileSignature } from 'lucide-react';
-
+// Importando o schema de validação do contrato
 const contractSchema = z.object({
   type: z.string().min(1, 'Selecione um tipo'),
   clientId: z.string().min(1, 'Selecione um cliente'),
