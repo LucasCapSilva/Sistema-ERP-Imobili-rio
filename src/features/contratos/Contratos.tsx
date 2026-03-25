@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, FileText, AlertTriangle, CheckCircle, Clock, Edit } from 'lucide-react';
 import { ContractForm, type FormattedContract } from './ContractForm';
 import { AdvancedFilter } from '../../components/ui/AdvancedFilter';
-import { createContract, getClients, getContracts, getProperties, updateContract, type ContractApiModel } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 
 type Contract = FormattedContract;
 type ContractFilters = Record<string, string | number | null | undefined>;
@@ -22,41 +22,28 @@ const filterOptions = [
 ];
 
 const Contratos = () => {
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [clients, setClients] = useState<Array<{ id: string; name: string; type: string }>>([]);
-  const [properties, setProperties] = useState<Array<{ id: string; title: string; type: string; price: number }>>([]);
+  const contracts = useAppStore((state) => state.contracts) as Contract[];
+  const clients = useAppStore((state) => state.clients);
+  const properties = useAppStore((state) => state.properties);
+  const upsertContract = useAppStore((state) => state.upsertContract);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<ContractFilters>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [contractsResponse, clientsResponse, propertiesResponse] = await Promise.all([
-          getContracts({ page: 1, pageSize: 200 }),
-          getClients({ page: 1, pageSize: 200 }),
-          getProperties({ page: 1, pageSize: 200 })
-        ]);
-        setContracts(contractsResponse.items.map(mapContractFromApi));
-        setClients(clientsResponse.items.map(item => ({ id: item.id, name: item.name, type: item.type })));
-        setProperties(propertiesResponse.items.map(item => ({ id: item.id, title: item.title, type: item.type, price: item.price })));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadData();
-  }, []);
-
-  const getClientName = (id: string) => clients.find(c => c.id === id)?.name || 'Cliente não encontrado';
-  const getPropertyTitle = (id: string) => properties.find(p => p.id === id)?.title || 'Imóvel não encontrado';
+  const clientsById = useMemo(
+    () => new Map(clients.map((client) => [client.id, client.name])),
+    [clients]
+  );
+  const propertiesById = useMemo(
+    () => new Map(properties.map((property) => [property.id, property.title])),
+    [properties]
+  );
 
   const filteredContracts = useMemo(() => {
     return contracts.filter(contract => {
-      const clientName = getClientName(contract.clientId).toLowerCase();
-      const propertyTitle = getPropertyTitle(contract.propertyId).toLowerCase();
+      const clientName = (clientsById.get(contract.clientId) || 'Cliente não encontrado').toLowerCase();
+      const propertyTitle = (propertiesById.get(contract.propertyId) || 'Imóvel não encontrado').toLowerCase();
       const matchSearch = clientName.includes(searchTerm.toLowerCase()) || propertyTitle.includes(searchTerm.toLowerCase());
       
       const matchStatus = !filters.status || contract.status === filters.status;
@@ -64,35 +51,10 @@ const Contratos = () => {
       
       return matchSearch && matchStatus && matchType;
     }).slice(0, 50);
-  }, [contracts, searchTerm, filters]);
+  }, [contracts, searchTerm, filters, clientsById, propertiesById]);
 
-  const handleSaveContract = async (newContract: Contract) => {
-    if (selectedContract) {
-      const updated = await updateContract(newContract.id, {
-        type: newContract.type,
-        propertyId: newContract.propertyId,
-        clientId: newContract.clientId,
-        value: newContract.value,
-        status: newContract.status,
-        startDate: newContract.startDate,
-        endDate: newContract.endDate,
-        signedAt: newContract.signedAt
-      });
-      setContracts(prev => prev.map(c => c.id === updated.id ? mapContractFromApi(updated) : c));
-      return;
-    }
-
-    const created = await createContract({
-      type: newContract.type,
-      propertyId: newContract.propertyId,
-      clientId: newContract.clientId,
-      value: newContract.value,
-      status: newContract.status,
-      startDate: newContract.startDate,
-      endDate: newContract.endDate,
-      signedAt: newContract.signedAt
-    });
-    setContracts(prev => [mapContractFromApi(created), ...prev]);
+  const handleSaveContract = (newContract: Contract) => {
+    upsertContract(newContract);
   };
 
   const getStatusBadge = (status: string, endDate: string) => {
@@ -142,7 +104,7 @@ const Contratos = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {!isLoading && filteredContracts.map((contract, index) => (
+        {filteredContracts.map((contract, index) => (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -160,11 +122,15 @@ const Contratos = () => {
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-slate-500 uppercase font-semibold tracking-wider">Cliente</p>
-                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{getClientName(contract.clientId)}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {clientsById.get(contract.clientId) || 'Cliente não encontrado'}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase font-semibold tracking-wider">Imóvel</p>
-                <p className="text-sm text-slate-700 dark:text-slate-300 truncate">{getPropertyTitle(contract.propertyId)}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                  {propertiesById.get(contract.propertyId) || 'Imóvel não encontrado'}
+                </p>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -201,17 +167,11 @@ const Contratos = () => {
           </motion.div>
         ))}
 
-        {!isLoading && filteredContracts.length === 0 && (
+        {filteredContracts.length === 0 && (
           <div className="col-span-full p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
             <FileText className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white">Nenhum contrato encontrado</h3>
             <p className="text-slate-500 mt-1">Tente ajustar seus filtros de busca.</p>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="col-span-full p-12 text-center text-slate-500">
-            Carregando contratos...
           </div>
         )}
       </div>
@@ -232,17 +192,3 @@ const Contratos = () => {
 };
 
 export default Contratos;
-
-function mapContractFromApi(contract: ContractApiModel): FormattedContract {
-  return {
-    id: contract.id,
-    type: contract.type,
-    propertyId: contract.propertyId,
-    clientId: contract.clientId,
-    value: contract.value,
-    status: contract.status,
-    startDate: contract.startDate,
-    endDate: contract.endDate,
-    signedAt: contract.signedAt ?? null
-  };
-}

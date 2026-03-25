@@ -26,8 +26,8 @@ export interface FormattedContract extends ContractFormData {
 
 interface ContractFormProps {
   contract?: FormattedContract;
-  clients: Array<{ id: string; name: string; type?: string }>;
-  properties: Array<{ id: string; title: string; type?: string; price: number }>;
+  clients: Array<{ id: string; name: string; type: string }>;
+  properties: Array<{ id: string; title: string; type: string; price: number }>;
   initialData?: {
     type?: string;
     clientId?: string;
@@ -38,7 +38,7 @@ interface ContractFormProps {
     endDate?: string;
   };
   onClose: () => void;
-  onSubmit: (data: FormattedContract) => Promise<void> | void;
+  onSubmit: (data: FormattedContract) => void;
 }
 
 export const ContractForm = ({ contract, clients, properties, initialData, onClose, onSubmit }: ContractFormProps) => {
@@ -89,7 +89,7 @@ export const ContractForm = ({ contract, clients, properties, initialData, onClo
   useEffect(() => {
     // Auto-fill value based on property if not editing
     if (!contract && watchPropertyId) {
-      const property = properties.find(p => p.id === watchPropertyId);
+      const property = properties.find((item) => item.id === watchPropertyId);
       if (property) {
         setValue('value', property.price);
       }
@@ -98,6 +98,7 @@ export const ContractForm = ({ contract, clients, properties, initialData, onClo
 
   const handleFormSubmit = async (data: ContractFormData) => {
     setIsSubmitting(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     const formattedData = {
       id: contract ? contract.id : `ctrt-${Date.now()}`,
@@ -107,7 +108,7 @@ export const ContractForm = ({ contract, clients, properties, initialData, onClo
       signedAt: watchStatus === 'Ativo' ? new Date().toISOString() : null,
     };
     
-    await onSubmit(formattedData);
+    onSubmit(formattedData);
     setIsSubmitting(false);
     onClose();
   };

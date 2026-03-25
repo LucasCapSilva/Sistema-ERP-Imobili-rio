@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, MoreVertical, MapPin, Home, X } from 'lucide-react';
 import { PropertyForm } from './PropertyForm';
-import { ContractForm } from '../contratos/ContractForm';
+import { ContractForm, type FormattedContract } from '../contratos/ContractForm';
 import { AdvancedFilter } from '../../components/ui/AdvancedFilter';
-import { createContract, createProperty, getClients, getProperties, updateProperty, type PropertyApiModel } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 
 interface Property {
   id: string;
@@ -56,8 +56,11 @@ const filterOptions = [
 ];
 
 const Properties = () => {
-  const [propertiesData, setPropertiesData] = useState<Property[]>([]);
-  const [clients, setClients] = useState<Array<{ id: string; name: string; type: string }>>([]);
+  const propertiesData = useAppStore((state) => state.properties) as Property[];
+  const clients = useAppStore((state) => state.clients);
+  const upsertProperty = useAppStore((state) => state.upsertProperty);
+  const upsertContract = useAppStore((state) => state.upsertContract);
+  const updatePropertyStatus = useAppStore((state) => state.updatePropertyStatus);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<Record<string, string | number | null | undefined>>({});
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -65,62 +68,11 @@ const Properties = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isContractFormOpen, setIsContractFormOpen] = useState(false);
   const [contractInitialData, setContractInitialData] = useState<ContractInitialData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [propertiesResponse, clientsResponse] = await Promise.all([
-          getProperties({ page: 1, pageSize: 200 }),
-          getClients({ page: 1, pageSize: 200 })
-        ]);
-        setPropertiesData(propertiesResponse.items.map(mapPropertyFromApi));
-        setClients(clientsResponse.items.map(item => ({ id: item.id, name: item.name, type: item.type })));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadData();
-  }, []);
-
-  const handleSaveProperty = async (propertyData: Property) => {
-    if (editingProperty) {
-      const updated = await updateProperty(propertyData.id, {
-        title: propertyData.title,
-        type: propertyData.type,
-        address: propertyData.address,
-        price: propertyData.price,
-        rentPrice: propertyData.rentPrice,
-        status: propertyData.status,
-        image: propertyData.image,
-        description: propertyData.description,
-        bedrooms: propertyData.features.bedrooms,
-        bathrooms: propertyData.features.bathrooms,
-        parking: propertyData.features.parking,
-        area: propertyData.features.area
-      });
-      const mapped = mapPropertyFromApi(updated);
-      setPropertiesData(prev => prev.map(item => item.id === mapped.id ? mapped : item));
-      if (selectedProperty?.id === mapped.id) {
-        setSelectedProperty(mapped);
-      }
-    } else {
-      const created = await createProperty({
-        title: propertyData.title,
-        type: propertyData.type,
-        address: propertyData.address,
-        price: propertyData.price,
-        rentPrice: propertyData.rentPrice,
-        status: propertyData.status,
-        image: propertyData.image,
-        description: propertyData.description,
-        bedrooms: propertyData.features.bedrooms,
-        bathrooms: propertyData.features.bathrooms,
-        parking: propertyData.features.parking,
-        area: propertyData.features.area
-      });
-      setPropertiesData(prev => [mapPropertyFromApi(created), ...prev]);
+  const handleSaveProperty = (propertyData: Property) => {
+    upsertProperty(propertyData);
+    if (selectedProperty?.id === propertyData.id) {
+      setSelectedProperty(prev => prev ? { ...prev, ...propertyData } : prev);
     }
     setEditingProperty(null);
     setIsFormOpen(false);
@@ -151,23 +103,10 @@ const Properties = () => {
     setIsContractFormOpen(true);
   };
 
-  const handleCreateContract = async (data: { clientId: string; type: string; value: number; status: string; startDate: string; endDate: string; signedAt: string | null }) => {
+  const handleCreateContract = (contractData: FormattedContract) => {
     if (!selectedProperty) return;
-    await createContract({
-      type: data.type,
-      clientId: data.clientId,
-      propertyId: selectedProperty.id,
-      value: data.value,
-      status: data.status,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      signedAt: data.signedAt
-    });
-    setPropertiesData(prev =>
-      prev.map(item =>
-        item.id === selectedProperty.id ? { ...item, status: 'Em Negociação' } : item
-      )
-    );
+    upsertContract(contractData);
+    updatePropertyStatus(selectedProperty.id, 'Em Negociação');
     setSelectedProperty(prev => prev ? { ...prev, status: 'Em Negociação' } : prev);
     setIsContractFormOpen(false);
     setContractInitialData(null);
@@ -240,7 +179,7 @@ const Properties = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {!isLoading && filteredProperties.map((prop, index) => (
+              {filteredProperties.map((prop, index) => (
                 <motion.tr 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -285,17 +224,11 @@ const Properties = () => {
             </tbody>
           </table>
           
-          {!isLoading && filteredProperties.length === 0 && (
+          {filteredProperties.length === 0 && (
             <div className="p-12 text-center">
               <Home className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white">Nenhum imóvel encontrado</h3>
               <p className="text-slate-500 mt-1">Tente ajustar seus filtros de busca.</p>
-            </div>
-          )}
-
-          {isLoading && (
-            <div className="p-12 text-center text-slate-500">
-              Carregando imóveis...
             </div>
           )}
         </div>
@@ -405,23 +338,13 @@ const Properties = () => {
         {isContractFormOpen && (
           <ContractForm
             clients={clients}
-            properties={propertiesData.map(item => ({ id: item.id, title: item.title, type: item.type, price: item.price }))}
+            properties={propertiesData}
             initialData={contractInitialData ?? undefined}
             onClose={() => {
               setIsContractFormOpen(false);
               setContractInitialData(null);
             }}
-            onSubmit={(contract) =>
-              handleCreateContract({
-                clientId: contract.clientId,
-                type: contract.type,
-                value: contract.value,
-                status: contract.status,
-                startDate: contract.startDate,
-                endDate: contract.endDate,
-                signedAt: contract.signedAt
-              })
-            }
+            onSubmit={handleCreateContract}
           />
         )}
       </AnimatePresence>
@@ -430,24 +353,3 @@ const Properties = () => {
 };
 
 export default Properties;
-
-function mapPropertyFromApi(property: PropertyApiModel): Property {
-  return {
-    id: property.id,
-    title: property.title,
-    type: property.type,
-    address: property.address,
-    price: property.price,
-    rentPrice: property.rentPrice,
-    status: property.status,
-    createdAt: property.createdAt,
-    image: property.image,
-    description: property.description ?? undefined,
-    features: {
-      bedrooms: property.features.bedrooms,
-      bathrooms: property.features.bathrooms,
-      parking: property.features.parking,
-      area: property.features.area
-    }
-  };
-}
