@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
-import { House, LayoutDashboard, Building2, Users, FileText, Trello, Settings, Info, Menu, Bell, Search, Sun, Moon } from 'lucide-react';
+import { House, LayoutDashboard, Building2, Users, FileText, Trello, Settings, Info, Menu, Bell, Search, Sun, Moon, Github } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
@@ -215,6 +215,15 @@ const Header = ({ onOpenMobileSidebar }: { onOpenMobileSidebar: () => void }) =>
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2">
+        <a
+          href="https://github.com/LucasCapSilva/ERP-projeto"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Acessar repositório do projeto no GitHub"
+          className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
+        >
+          <Github size={20} />
+        </a>
         <button 
           onClick={toggleTheme}
           className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
